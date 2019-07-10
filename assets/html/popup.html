@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="./../css/siimple.css" />
+		<link rel="stylesheet" href="./../css/popup.css" />
+	</head>
+
+	<body>
+		<div class="main">
+			<div class="siimple-grid">
+				<div class="siimple-grid-row">
+
+					<div class="siimple-grid-col siimple-grid-col--7">
+						<div class="siimple-h3 siimple--text-center">Settings</div>
+
+						<div class="siimple-grid-col siimple-grid-col--6 siimple--text-right">
+
+							<div class="siimple-checkbox-container">
+								<label class="siimple-label">Item Notifier:</label>
+								<div class="siimple-checkbox">
+									<input type="checkbox" id="opt_item">
+									<label for="opt_item"></label>
+								</div>
+							</div>
+
+							<div class="siimple-checkbox-container">
+								<label class="siimple-label">Notification Sound:</label>
+								<div class="siimple-checkbox">
+									<input type="checkbox" id="opt_sound">
+									<label for="opt_sound"></label>
+								</div>
+							</div>
+
+						</div>
+
+						<div class="siimple-grid-col siimple-grid-col--6 siimple--text-right">
+
+							<div class="siimple-checkbox-container">
+								<label class="siimple-label">Unique Notifier:</label>
+								<div class="siimple-checkbox">
+									<input type="checkbox" id="opt_unique">
+									<label for="opt_unique"></label>
+								</div>
+							</div>
+	
+						</div>
+
+					</div>
+
+					<div class="siimple-grid-col siimple-grid-col--5">
+						<div class="siimple-h3 siimple--text-center">Recent Items</div>
+
+						<div class="siimple-grid-col siimple-grid-col--12" id="items">
+
+							<div class="siimple--text-center siimple-h6">No Recent Items :(</div>
+
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+		<script src="./../js/jquery.js"></script>
+		<script src="./../js/popup.js"></script>
+	</body>
+</html>
