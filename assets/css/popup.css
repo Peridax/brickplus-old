@@ -1,0 +1,28 @@
+body {
+	width: 750px;
+	height: 600px;
+}
+
+.siimple-image-card {
+	margin-bottom: 10px;
+}
+
+.siimple-image {
+	width: 100%;
+	height: 100%;
+}
+
+.siimple-name {
+	font-size: 16px;
+	margin-bottom: 2px;
+}
+
+#items {
+	height: 500px;
+	overflow-y: auto;
+}
+
+/* Edited Siimple Components */
+.siimple-label {
+	padding-right: 5px;
+}
