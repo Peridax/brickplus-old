@@ -5,16 +5,15 @@ class Brickplus {
 	
 	constructor() {
 
-		this.store 		= "https://www.brickplanet.com/store/browse";
-		this.ms			= {item: [8000, 16000], message: [30000, 45000], trade: [40000, 50000]}; // Message and trade notifier coming soon
+		this.store		= "https://www.brickplanet.com/web-api/store/get-recent-items";
+		this.ms			= {item: [28000, 30000], message: [30000, 45000], trade: [40000, 50000]};
 		this.measure	= [0, 0, 0];
 
-		this.original 	= new Object;
-		this.new 		= new Object;
+		this.original	= new Object;
+		this.new		= new Object;
 
-		this.storage	= chrome.storage.sync;
 		this.active		= true;
-		this.dev 		= false;
+		this.dev		= true;
 
 		// Event Handler for notification
 		chrome.notifications.onClicked.addListener((id) => {
@@ -31,6 +30,12 @@ class Brickplus {
 		// Item List
 		if (!localStorage.getItem('items')) {
 			localStorage.setItem('items', '[]');
+			localStorage.setItem('update message', "0.3");
+		} else {
+			if (!localStorage.getItem('update message')) {
+				localStorage.setItem('update message', "0.3");
+				chrome.notifications.create("update 0.3", {type: "basic", title: "Fixed brickplus", message: "Brickplus has been fixed, notifies new and updated items every single time", iconUrl: "assets/img/icon128.png"});
+			}
 		}
 
 	}
@@ -38,70 +43,47 @@ class Brickplus {
 	initialize() {
 
 		console.log('Initializing brickplus...');
-		setTimeout(brickplus.bot, 1000);
+		setTimeout(brickplus.notifier, 1000);
 
 	}
 
-	bot() {
+	notifier() {
 
 		$.get(brickplus.store).then((data) => {
-
-			let currentData				= $('.sbrowse-card', data).first();
-			brickplus.new.name			= $(currentData).find('.item-name').text();
-			brickplus.new.id			= $(currentData).find('a').first().attr('href').split('/')[2];
-			brickplus.new.img			= $(currentData).find('img').attr('src');
-			brickplus.new.credits		= $(currentData).find('.item-price .price-credits').text().split(" ")[0];
-			brickplus.new.bits			= $(currentData).find('.item-price .price-bits').text().split(" ")[0];
-			brickplus.new.unique		= $(currentData).find('.ribbon-unique').length;
+			
+			let current					= data[0];
+			brickplus.new.name			= current.Name;
+			brickplus.new.id			= current.ID;
+			brickplus.new.img			= "https://cdn.brickplanet.com/" + current.Image;
+			brickplus.new.credits		= current.PriceCredits;
+			brickplus.new.bits			= current.PriceBits;
+			brickplus.new.unique		= current.IsUnique;
 
 			if (!Object.keys(brickplus.original).length) {
-				brickplus.original.name 		= brickplus.new.name;
-				brickplus.original.id			= brickplus.new.id;
-				brickplus.original.img			= brickplus.new.img;
-				brickplus.original.credits 		= brickplus.new.credits;
-				brickplus.original.bits 		= brickplus.new.bits;
-				brickplus.original.unique 		= brickplus.new.unique;
 
+				brickplus.assign();
 				if (brickplus.dev) { console.log('Retrieved initial data') };
+
 			} else {
-				if (parseInt(brickplus.new.id) > parseInt(brickplus.original.id)) {
 
-					brickplus.original.name 		= brickplus.new.name;
-					brickplus.original.id			= brickplus.new.id;
-					brickplus.original.img			= brickplus.new.img;
-					brickplus.original.credits 		= brickplus.new.credits;
-					brickplus.original.bits 		= brickplus.new.bits;
-					brickplus.original.unique 		= brickplus.new.unique;
+				if (brickplus.new.id > brickplus.original.id) {
 
-					if ( (brickplus.original.unique && JSON.parse(localStorage.getItem('opt_unique'))) || (!brickplus.original.unique && JSON.parse(localStorage.getItem('opt_item'))) || !localStorage.getItem('enabled_settings') ) {
-						let tempArr = [];
-						(brickplus.original.credits !== "") ? tempArr.push({title: "Credits", message: brickplus.original.credits}): null;
-						(brickplus.original.bits !== "") ? tempArr.push({title: "Bits", message: brickplus.original.bits}) : null;
-						
-						let currentNotification = {
-							type: "list",
-							title: (brickplus.original.unique) ? "New Unique Item" : "New Item",
-							message: brickplus.original.name,
-							iconUrl: brickplus.original.img,
-							items: tempArr
-						};
+					brickplus.assign();
+					let state = "New";
 
-						chrome.notifications.create(brickplus.original.id, currentNotification);
-						
-						if (JSON.parse(localStorage.getItem('opt_sound')) || !localStorage.getItem('enabled_settings')) {
-							responsiveVoice.speak((brickplus.original.unique) ? "New Unique Item" : "New Item", "UK English Male");
-						}
+					brickplus.original.state = state;
+					brickplus.notify();
 
-						let temp = JSON.parse(localStorage.getItem('items'));
-						temp.push({id: brickplus.original.id, name: brickplus.original.name, img: brickplus.original.img, bits: brickplus.original.bits, credits: brickplus.original.credits});
-						localStorage.setItem('items', JSON.stringify(temp));
-					}
+				} else if (brickplus.new.id < brickplus.original.id) {
 
-					if (brickplus.dev) { console.log('New item detected') };
+					brickplus.assign();
+					let state = "Updated";
 
-				} else {
-					if (brickplus.dev) { console.log('No new item detected') };
+					brickplus.original.state = state;
+					brickplus.notify();
+
 				}
+
 			}
 
 		});
@@ -115,12 +97,61 @@ class Brickplus {
 			};
 		};
 
-		brickplus.active ? setTimeout(brickplus.bot, brickplus.time(brickplus.ms.item)) : console.log('Item Notifier Disabled');
+		brickplus.active ? setTimeout(brickplus.notifier, brickplus.time(brickplus.ms.item)) : console.log('Item Notifier Disabled');
+		
+	}
 
+	assign() {
+		brickplus.original.name 		= brickplus.new.name;
+		brickplus.original.id			= brickplus.new.id;
+		brickplus.original.img			= brickplus.new.img;
+		brickplus.original.credits 		= brickplus.new.credits;
+		brickplus.original.bits 		= brickplus.new.bits;
+		brickplus.original.unique 		= brickplus.new.unique;
 	}
 
 	time(arr) {
 		return Math.floor(Math.random() * (arr[1] - arr[0] + 1) + arr[0]);
+	}
+
+	notify() {
+
+		if ( (brickplus.original.unique && JSON.parse(localStorage.getItem('opt_unique'))) || (!brickplus.original.unique && JSON.parse(localStorage.getItem('opt_item'))) || !localStorage.getItem('enabled_settings') ) {
+			let currentNotification = {
+				type: "basic",
+				title: "Item",
+				message: brickplus.original.name,
+				iconUrl: brickplus.original.img
+			};
+
+			if (brickplus.original.credits || brickplus.original.bits) {
+				let tempArr = [];
+				(brickplus.original.credits) ? tempArr.push({title: "Credits", message: brickplus.original.credits.toString()}): null;
+				(brickplus.original.bits) ? tempArr.push({title: "Bits", message: brickplus.original.bits.toString()}) : null;
+
+				currentNotification["type"]		= "list";
+				currentNotification["items"]	= tempArr;
+			}
+
+			if (brickplus.original.state == "New") {
+				currentNotification.title = (brickplus.original.unique) ? "New Unique Item" : "New Item";
+			} else if (brickplus.original.state == "Updated") {
+				currentNotification.title = (brickplus.original.unique) ? "Updated Unique Item" : "Updated Item";
+			}
+
+			console.log(currentNotification);
+
+			chrome.notifications.create(brickplus.original.id.toString(), currentNotification);
+			
+			if (JSON.parse(localStorage.getItem('opt_sound')) || !localStorage.getItem('enabled_settings')) {
+				responsiveVoice.speak(currentNotification.title, "UK English Male");
+			}
+
+			let temp = JSON.parse(localStorage.getItem('items'));
+			temp.push({id: brickplus.original.id, name: brickplus.original.name, img: brickplus.original.img, bits: brickplus.original.bits, credits: brickplus.original.credits});
+			localStorage.setItem('items', JSON.stringify(temp));
+		}
+
 	}
 
 }
