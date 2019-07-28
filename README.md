@@ -1,6 +1,8 @@
 # brickplus
 A simple open source item notifier for brickplanet. This notifier includes an extension popup with a settings section where you can disable regular item notifications, unique item notifications, or notification sounds.
 
+![brickplus](https://i.gyazo.com/386d96888407e45246b05818d634a268.png)
+
 ## Installation
 It's very simple to install brickplus. You can either install it off the chrome web store, or install it locally.
 
